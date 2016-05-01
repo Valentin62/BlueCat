@@ -1,0 +1,9 @@
+{
+  "Manifest": {
+    "Type": "ONEPAGE",
+    "Nom": "defaut",
+    "Auteur": "Pierre TIELEMANS",
+    "Version": 1.0,
+    "Description": "Je suis la description du thème par défaut ! :)"
+  }
+}

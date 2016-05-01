@@ -1,0 +1,10 @@
+{
+  "Manifest": {
+    "Type": "MODULE",
+    "Nom": "Mail",
+    "Auteur": "Pierre TIELEMANS",
+    "Version": 1.0,
+	"MinCMSVersion": 0.1,
+    "Description": "Module d'envoi de mails."
+  }
+}

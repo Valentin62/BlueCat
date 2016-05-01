@@ -1,0 +1,27 @@
+/*
+ * Copyright (c) 2016. Tous droits réservés.
+ * Pierre TIELEMANS (www.pierre-tielemans.be) - contact[at]pierre-tielemans.be
+ */
+
+body {
+    color: #797979;
+    background: #f1f2f7;
+    font-family: 'Open Sans', sans-serif;
+    padding: 0px !important;
+    margin: 0px !important;
+    font-size:13px;
+}
+
+/*login page*/
+
+.login-body {
+    background-color: #f1f2f7;
+}
+
+/*footer*/
+
+.site-footer {
+    background: #5b6e84;
+    color: #fff;
+    padding: 10px 0;
+}
