@@ -113,7 +113,7 @@
 
               <div class="row">
                   <div class="col-lg-8">
-                      <?php $BUILDER->Widget_area('dashboard_4'); ?>
+                      <?php $BUILDER->Widget_area('dashboard_8'); ?>
                   </div>
                   <div class="col-lg-4">
                       <?php $BUILDER->Widget_area('dashboard_4'); ?>

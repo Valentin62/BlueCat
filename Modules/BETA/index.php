@@ -4,5 +4,5 @@
  * Pierre TIELEMANS (www.pierre-tielemans.be) - contact[at]pierre-tielemans.be
  */
 echo "Je suis le preemier module !!!!";
-include (MODULE_PATH."src/inc.php");
+Build::addFile('src/inc.php');
 ?>

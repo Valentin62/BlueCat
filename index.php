@@ -40,4 +40,19 @@ if(empty($_GET['view_page'])){
     }
 }
 
+/////////////////////////////////
+/// Executions des scriptes si il y en a
+/////////////////////////////////
+
+$req_select_script = $bdd->prepare("SELECT * FROM " . $SQL_prefixe . "modules WHERE flag_actif LIKE 'TRUE' AND script LIKE 'TRUE'");
+$req_select_script->execute();
+while($add_script = $req_select_script->fetch()) {
+
+    if (file_exists('Scripts/' . $add_script['nom'] . '.php')) {
+        include_once 'Scripts/' . $add_script['nom'] . '.php';
+    } else {
+        $CORE->report_error('Impossible de charger le script '.$add_script['nom'].': Fichier introuvable (404) !', '');
+    }
+
+}
 

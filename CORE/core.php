@@ -44,6 +44,8 @@ class CORE {
             $findwithid = 13;
         }elseif($get_info == "debug"){
             $findwithid = 2;
+        }elseif($get_info == "max_try"){
+            $findwithid = 14;
         }
         
         $req_select_params = $bdd->prepare('SELECT valeur FROM ' . $SQL_prefixe . 'parametres WHERE id LIKE :id');
@@ -169,6 +171,44 @@ class CORE {
 		  <button type='button' class='close' data-dismiss='alert'>×</button>
 		  ".$message."
 		</div> " ;
+
+    }
+
+    /////////////////////////
+    /// Banni une IP du panel ou vérifie si elle l'est
+    /// BOOLEAN
+    /////////////////////////
+    public static function banIP($ipban, $totime, $raison){
+
+        global $bdd;
+        global $SQL_prefixe;
+
+        $req_select_ban = $bdd->prepare("SELECT * FROM " . $SQL_prefixe . "ban WHERE ip LIKE :ip");
+        $req_select_ban->execute(array(':ip' => $ipban));
+
+        if(!empty($totime) && $req_select_ban->rowCount() == 0) {
+
+            $add_ban = $bdd->prepare('INSERT INTO ' . $SQL_prefixe . 'ban (ip, totime, raison) VALUES (:ip, :totime, :raison)');
+            $add_ban->execute(array(':ip' => $ipban, ':totime' => $totime, ':raison' => $raison));
+
+        }else{
+
+            if ($req_select_ban->rowCount() == 1) {
+                $bantime = $req_select_ban->fetch();
+
+                if(time('U') >= $bantime['totime']){
+                    return "FALSE";
+                    $req_unban = $bdd->prepare("DELETE FROM " . $SQL_prefixe . "ban WHERE ip LIKE :ip");
+                    $req_unban->execute(array(':ip' => $ipban));
+                }else{
+                    return "TRUE";
+                }
+
+            }else{
+                return "FALSE";
+            }
+
+        }
 
     }
 

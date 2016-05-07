@@ -48,6 +48,15 @@
 
     <?php
 
+    // IP
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        $ip = $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'];
+    }
+
     if(!empty($_POST['pass']) && !empty($_POST['email'])){
 
         if($CORE->info('algorithme') == "sha1"){
@@ -94,7 +103,7 @@
 
             setcookie("user", $formemail, time()+172800, "/"); // 2 Jours)
 
-            $CORE->Alert('<strong>YEAHHH !</strong> Redirection au panel...', 'success');
+            $CORE->Alert('<strong>YEAHHH !</strong> Bonjour <strong>'.$requ_fetch['nom'].'</strong>!<br/> Redirection au panel...', 'success');
             header( "refresh:1;url=dashboard.php" );
 
 
@@ -103,25 +112,54 @@
             if($requ_fetch['flag_actif'] == "FALSE"){
                 $CORE->Alert('<strong>Attention !</strong> Votre compte est désactivé !', 'warning');
             }else{
-                $CORE->Alert("<strong>Raté !</strong> L'utilisateur ou le mot de passe est erroné !", 'danger');
+
+                if (!isset($_COOKIE['try'])){
+                    setcookie("try", 1);
+                }elseif($_COOKIE['try'] >= $CORE->info('max_try') && $CORE->info('max_try') != "0"){
+                    CORE::banIP($ip, time('U')+86400, "Banni 24H pour trop de tentative de connexion");
+                    setcookie("try", 0, time('U')+86100);
+                }else{
+                    setcookie("try", $_COOKIE['try']+1);
+                }
+
+                $CORE->Alert("<strong>Raté !</strong> L'utilisateur ou le mot de passe est erroné ! <strong>(".$_COOKIE['try']."/".$CORE->info('max_try').")</strong>", 'danger');
+
             }
 
         }
 
     }
 
-    ?>
-
-            <input type="text" name="email" class="form-control" placeholder="Adresse Email" autofocus>
-            <input type="password" name="pass" class="form-control" placeholder="Mot de passe">
-            <label class="checkbox">
-                <input type="checkbox" name="stay"> Se souvenir de moi
-                <span class="pull-right">
-                    <a data-toggle="modal" href="#myModal"> Mot de passe oublié?</a>
+    if(CORE::banIP($ip, '', '') == "TRUE"){
+        $CORE->Alert('<strong>HEY !</strong> Ton IP a été bannie !', 'danger');
+        echo "
+        <input type=\"text\" name=\"email\" class=\"form-control\" placeholder=\"Adresse Email\" disabled>
+            <input type=\"password\" name=\"pass\" class=\"form-control\" placeholder=\"Mot de passe\" disabled>
+            <label class=\"checkbox\">
+                <input type=\"checkbox\" name=\"stay\" disabled> Se souvenir de moi
+                <span class=\"pull-right\">
+                    <a data-toggle=\"modal\" href=\"#myModal\" disabled> Mot de passe oublié?</a>
 
                 </span>
             </label>
-            <button class="btn btn-lg btn-login btn-block" type="submit">Connexion !</button>
+        <button class=\"btn btn-lg btn-login btn-block\" type=\"submit\" disabled>Connexion !</button>
+        ";
+    }else{
+        echo "
+        <input type=\"text\" name=\"email\" class=\"form-control\" placeholder=\"Adresse Email\" autofocus>
+            <input type=\"password\" name=\"pass\" class=\"form-control\" placeholder=\"Mot de passe\">
+            <label class=\"checkbox\">
+                <input type=\"checkbox\" name=\"stay\"> Se souvenir de moi
+                <span class=\"pull-right\">
+                    <a data-toggle=\"modal\" href=\"#myModal\"> Mot de passe oublié?</a>
+
+                </span>
+            </label>
+        <button class=\"btn btn-lg btn-login btn-block\" type=\"submit\">Connexion !</button>
+        ";
+    }
+
+    ?>
 
         </div>
 

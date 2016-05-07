@@ -84,6 +84,15 @@ class Build {
 
     }
 
+    /////////////////////////////////////
+    /// Création de l'outil d'aide à l'inclusion des fichiers
+    /////////////////////////////////////
+    public static function addFile($file_to_include){
+        $arraydebugb = debug_backtrace();
+        $finalarray = explode("/", $arraydebugb[0]['file']);
+        include dirname(__DIR__)."/".$finalarray[4]."/".$finalarray[5]."/".$file_to_include;
+    }
+
     //////////////////////////
     /// Création d'un widget
     //////////////////////////
@@ -92,15 +101,12 @@ class Build {
         global $bdd;
         global $SQL_prefixe;
 
+        // Sélection des informations relatives à la zone de module
         $req_select_module_wp = $bdd->prepare("SELECT * FROM " . $SQL_prefixe . "module_area WHERE nom LIKE :nom AND flag_actif LIKE 'TRUE'");
         $req_select_module_wp->execute(array('nom' => $nom));
         $select_module_wp = $req_select_module_wp->fetch();
         $module = $select_module_wp['widget'];
         $color = $select_module_wp['color'];
-
-        if(!defined('MODULE_PATH')){
-            define("MODULE_PATH", '../Modules/'.$module.'/');
-        }
 
         if(empty($module)){
 
@@ -127,11 +133,9 @@ class Build {
                                                 $select_u_widget = $module; // TODO: simplifier variables
 
                                                 if ($select_u_widget == $select_m_nom) {
-                                                    echo "<option style='color: blue; value='" . $select_m_nom . "' selected>" . $select_m_nom . " [ " . $select_m_version . " ]</option>";
-                                                }elseif(empty($select_u_widget)){
-                                                    echo "<option style='color: green;' value='".$select_m_nom."'>".$select_m_nom." [ ".$select_m_version." ]</option>";
+                                                    echo "<option value='" . $select_m_nom . "' selected><bold>" . $select_m_nom . " [ " . $select_m_version . " ]</bold></option>";
                                                 }else{
-                                                    echo "<option style='color: red;' value='".$select_m_nom."'>".$select_m_nom." [ ".$select_m_version." ]</option>";
+                                                    echo "<option value='".$select_m_nom."'>".$select_m_nom." [ ".$select_m_version." ]</option>";
                                                 }
 
                                             }
@@ -187,11 +191,9 @@ class Build {
                                                 $select_u_widget = $select_modules_used['widget'];
 
                                                 if ($select_u_widget == $select_m_nom) {
-                                                    echo "<option style='color: blue; value='" . $select_m_nom . "' selected>" . $select_m_nom . " [ " . $select_m_version . " ]</option>";
-                                                }elseif(empty($select_u_widget)){
-                                                    echo "<option style='color: green;' value='".$select_m_nom."'>".$select_m_nom." [ ".$select_m_version." ]</option>";
+                                                    echo "<option value='" . $select_m_nom . "' selected><bold>" . $select_m_nom . " [ " . $select_m_version . " ]</bold></option>";
                                                 }else{
-                                                    echo "<option style='color: red;' value='".$select_m_nom."'>".$select_m_nom." [ ".$select_m_version." ]</option>";
+                                                    echo "<option value='".$select_m_nom."'>".$select_m_nom." [ ".$select_m_version." ]</option>";
                                                 }
 
                                             }
