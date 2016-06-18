@@ -45,5 +45,6 @@ Vous devez disposer de:
 ## Credits
 
 CODE: Pierre TIELEMANS (www.pierre-tielemans.be)
+
 LOGO: Corentin Brand @ Co2graphisme (www.co2graphisme.fr)
 
