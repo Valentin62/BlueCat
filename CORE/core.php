@@ -16,6 +16,36 @@ if(!empty($_SESSION)){
 
 class CORE {
 
+    /////////////////////////
+    /// Insert d'un évènement d'erreur
+    /////////////////////////
+    public function report_error($error, $debug){
+
+        global $CORE;
+
+        if($CORE->info('debug') == "TRUE" OR $debug == "TRUE"){ // Affichage de l'erreur chez le client
+
+            echo "<script>console.log('ERREUR: ".$error."');</script>";
+
+        }else{ // Affichage de l'erreur sur le serveur
+
+            $file_logs = '/Logs/logs.txt';
+
+            if (file_exists($file_logs)) {
+                $current_file_logs = file_get_contents(dirname(__FILE__) . $file_logs);
+                $current_file_logs .= "[" . date('Y-m-d H:i:s') . "] - ERREUR: " . $error . "\n";
+                file_put_contents(dirname(__FILE__) . $file_logs, $current_file_logs);
+            } else {
+                fopen(dirname(__FILE__) . $file_logs, 'w+');
+                $current_file_logs = "[" . date('Y-m-d H:i:s') . "] - INFO: Création du fichier de logs \n";
+                $current_file_logs .= "[" . date('Y-m-d H:i:s') . "] - ERREUR: " . $error . "\n";
+                file_put_contents(dirname(__FILE__) . $file_logs, $current_file_logs);
+            }
+
+        }
+
+    }
+
     ////////////////////////
     /// Récuperation des infos générales
     /// VARCHAR
@@ -46,43 +76,16 @@ class CORE {
             $findwithid = 2;
         }elseif($get_info == "max_try"){
             $findwithid = 14;
+        }elseif($get_info == "langue_site"){
+            $findwithid = 15;
+        }else{
+            $this->report_error('Sélection d\'un paramètres introuvable ( '.$get_info.' ) !', '');
         }
         
         $req_select_params = $bdd->prepare('SELECT valeur FROM ' . $SQL_prefixe . 'parametres WHERE id LIKE :id');
         $req_select_params->execute(array(':id' => $findwithid));
         $select_params = $req_select_params->fetch();
         return $select_params['valeur'];
-
-    }
-
-    /////////////////////////
-    /// Insert d'un évènement d'erreur
-    /////////////////////////
-    public function report_error($error, $debug){
-
-        global $CORE;
-
-        if($CORE->info('debug') == "TRUE" OR $debug == "TRUE"){ // Affichage de l'erreur chez le client
-
-            echo "<script>console.log('ERREUR: ".$error."');</script>";
-
-        }else{ // Affichage de l'erreur sur le serveur
-
-            $file_logs = '/Logs/errors_logs.txt';
-            define('ROOTPATH', dirname(__FILE__));
-
-            if (file_exists($file_logs)) {
-                $current_file_logs = file_get_contents(ROOTPATH . $file_logs);
-                $current_file_logs .= "[" . date('Y-m-d H:i:s') . "] - ERREUR: " . $error . "\n";
-                file_put_contents(ROOTPATH . $file_logs, $current_file_logs);
-            } else {
-                $creation_file = fopen(ROOTPATH . $file_logs, 'w+');
-                $current_file_logs = "[" . date('Y-m-d H:i:s') . "] - INFO: Création du fichier de logs \n";
-                $current_file_logs .= "[" . date('Y-m-d H:i:s') . "] - ERREUR: " . $error . "\n";
-                file_put_contents(ROOTPATH . $file_logs, $current_file_logs);
-            }
-
-        }
 
     }
 
@@ -207,6 +210,148 @@ class CORE {
             }else{
                 return "FALSE";
             }
+
+        }
+
+    }
+
+    /////////////////////////
+    /// Regarder si une MAJ est disponible
+    /// BOOLEAN
+    /////////////////////////
+    public function checkupdate(){
+
+        $request_lastversion = file_get_contents('http://apis.pierre-tielemans.be/CMS/?lastversion=1&domaine='.$_SERVER['SERVER_NAME']);
+
+        $arrayversion = json_decode($request_lastversion, 1);
+
+        if($this->info('CMS_version') < $arrayversion['version']){
+            return "$request_lastversion";
+        }else{
+            return "FALSE";
+        }
+
+    }
+
+    /////////////////////////
+    /// Installer une MAJ
+    /// BOOLEAN
+    /////////////////////////
+    public function installupdate()
+    {
+
+        global $bdd;
+        global $SQL_prefixe;
+
+        $download_version = json_decode($this->checkupdate(), 1);
+
+        if (self::verify_licence() == "TRUE" && $download_version['version'] > $this->info('CMS_version')){
+
+            $file = $download_version['version'] . '.zip';
+
+            echo "\n
+                 ############################################# \n
+                 # Installateur de mise à jour natif BlueCat # \n
+                 ############################################# \n
+                 \n
+                 Version à installer: ".$download_version['version']." ( ".$download_version['version_nom']." )
+                 \n
+                 ";
+
+            if (!is_file('TEMP/BLUECAT-' . $download_version['version'] . '.zip')) {
+                echo 'Téléchargement de la MAJ à partir de GitHub...';
+                $newUpdate = file_get_contents("http://dev.pierre-tielemans.be/BLUECAT-0.0.1.zip"); // https://github.com/pierretielemans/BlueCat/archive/".$download_version['version'].".zip
+                if (!is_dir('TEMP/')) mkdir('TEMP/');
+                $dlHandler = fopen('TEMP/BLUECAT-' . $download_version['version'] . '.zip', 'w');
+                echo $dlHandler;
+                if (!fwrite($dlHandler, $newUpdate)) {
+                    echo 'Impossible de sauvgarder l\'archive: ' . $_ENV['site']['files']['includes-dir'];
+                    exit();
+                }
+                fclose($dlHandler);
+                echo 'Mise à jours téléchargée et sauvgardée';
+            } else echo 'Mise à jours déja téléchargée.';
+
+            $zipHandle = zip_open('TEMP/BLUECAT-' . $download_version['version'] . '.zip');
+
+            while ($aF = zip_read($zipHandle)) {
+                $thisFileName = zip_entry_name($aF);
+                $thisFileDir = dirname($thisFileName);
+
+                //Continue if its not a file
+                if (substr($thisFileName, -1, 1) == '/') continue;
+
+
+                //Make the directory if we need to...
+                if (!is_dir('/' . $thisFileDir)) {
+                    mkdir('/' . $thisFileDir);
+                    echo "Répertoire créé $thisFileDir";
+                }
+
+                //Overwrite the file
+                if (!is_dir('/' . $thisFileName)) {
+                    echo "Création d'uu répertoire";
+                    $contents = zip_entry_read($aF, zip_entry_filesize($aF));
+                    $contents = str_replace("\r\n", "\n", $contents);
+                    $updateThis = '';
+
+                    //If we need to run commands, then do it.
+                    if ($thisFileName == 'upgrade.php') {
+                        $upgradeExec = fopen('upgrade.php', 'w+');
+                        fwrite($upgradeExec, $contents);
+                        fclose($upgradeExec);
+                        include('upgrade.php');
+                        unlink('upgrade.php');
+                        echo 'Fichier (' . $thisFileName . ') Éxecuté';
+                    } else {
+                        $updateThis = fopen($thisFileName, 'w+');
+                        fwrite($updateThis, $contents);
+                        fclose($updateThis);
+                        unset($contents);
+                        echo 'Fichier (' . $thisFileName . ') mis à jour/créé';
+                    }
+                }
+            }
+
+            if (unlink('TEMP/BLUECAT-' . $download_version['version'] . '.zip')) {
+                echo 'Archive de mise à jour supprimée';
+            } else {
+                echo 'Impossible de supprimer l\'archive de mise à jour';
+            }
+
+            echo 'Mise à jour de la base de donnée';
+
+            $update_new_version = $bdd->prepare("UPDATE ".$SQL_prefixe."parametres SET valeur=:valeur WHERE id=3");
+            $update_new_version->execute(array(':valeur' => $download_version['version']));
+            $update_new_version_nom = $bdd->prepare("UPDATE ".$SQL_prefixe."parametres SET valeur=:valeur WHERE id=4");
+            $update_new_version_nom->execute(array(':valeur' => $download_version['version_nom']));
+
+            echo "\n
+                 ############################################# \n
+                 # Installateur de mise à jour natif BlueCat # \n
+                 ############################################# \n
+                 \n
+                 Mise à jour terminée !
+                 \n
+                 Nouvelle version installée: ".$download_version['version']." ( ".$download_version['version_nom']." )
+                 \n
+                 ";
+
+            return "TRUE";
+
+            //Envois des logs
+            //$this->report_error($logfile, '');
+
+        }else{ // La licence est invalide
+
+            return "FALSE";
+
+            if(self::verify_licence() !== "TRUE"){
+                $this->report_error('Votre CMS doit avoir une licence valide pour être mis à jour !', '');
+            }else{
+                $this->report_error('Votre CMS est mis à jour !', '');
+            }
+
 
         }
 

@@ -10,8 +10,8 @@
 
 include('CORE/core.php'); // Include du CORE
 $CORE = new CORE; // Initialisation du CORE
+include_once "CORE/Classes/interface.php"; // Interface Engine
 define("THEME", $CORE->info('theme')); // L'on définis le TITRE avec une constante
-define('THEMEPATH', "/Themes/".THEME."/");
 
 $get_json_manifest = json_decode(file_get_contents("Themes/".THEME."/manifest.json"), true);
 
@@ -28,16 +28,102 @@ if(CORE::Connecte() == TRUE) {
 //////////////////////////
 
 if(empty($_GET['view_page'])){
-    $page_request = "index";
-    $fichier_demande = 'Themes/'.THEME.'/index.php';
-    include($fichier_demande);
+    $requested_page = "index";
 }else{
-    $fichier_demande = 'Themes/'.THEME.'/'.$_GET['view_page'].'.php';
-    if (file_exists($fichier_demande)) {
-        include($fichier_demande); // Si le fichier demandé existe l'on l'affche
-    }else{
-        include('CORE/Errors/404/index.html'); // Le fichier demandé n'existe pas, donc 404
+    $requested_page = $_GET['view_page'];
+}
+
+// Selection de la page actuelle
+$req_select_current_page = $bdd->prepare("SELECT * FROM " . $SQL_prefixe . "pages WHERE slug LIKE :slug");
+$req_select_current_page->execute(array(':slug' => $requested_page));
+$select_current_page = $req_select_current_page->fetch();
+
+if($req_select_current_page->rowCount() != 0){
+
+    $req_select_all_pages = $bdd->prepare("SELECT * FROM " . $SQL_prefixe . "pages WHERE flag_actif LIKE 'TRUE' AND menu LIKE 'TRUE'");
+    $req_select_all_pages->execute();
+    $all_pages = $req_select_all_pages->fetchAll();
+
+    $row_count = 0;
+
+    foreach ($all_pages as $pages) {
+
+        $row = new tpl_engine("menu/menu_row.tpl");
+        $menuTemplates = array();
+
+        foreach ($pages as $test) {
+            $row->set_var("menu-title", $pages['nom']);
+
+            // Si c'est l'accueil
+            if($select_current_page['nom'] == $pages['nom']){
+                $row->set_var("menu-url", "#");
+            }elseif($pages['slug'] == "index"){
+                if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') { //HTTPS
+                    $row->set_var("menu-url", "https://".$_SERVER['HTTP_HOST']);
+                }else{ //HTTP
+                    $row->set_var("menu-url", "http://".$_SERVER['HTTP_HOST']);
+                }
+            }else{
+                $row->set_var("menu-url", "page/" . $pages['slug']);
+            }
+
+        }
+
+        $menuTemplates[] = $row;
+        if($row_count == 0){ $menu = tpl_engine::merge($menuTemplates); }else{ $menu .= tpl_engine::merge($menuTemplates);}
+        $row_count++;
+
     }
+
+    $display_menu = new tpl_engine("menu/menu.tpl"); // Initialisation de l'interface
+    $display_menu->set_var("menu", $menu);
+    $display_menu->set_var("sitename", $CORE->info('titre'));
+
+
+
+
+
+
+
+    $layout = new tpl_engine("layout.tpl"); // Initialisation de l'interface
+
+    if($CORE->info('index_engine') == "TRUE"){
+
+        $req_select_SEO_information = $bdd->prepare('SELECT * FROM ' . $SQL_prefixe . 'index_engine');
+        $req_select_SEO_information->execute();
+        $BC_SEO = $req_select_SEO_information->fetch();
+
+        $layout->set_var("meta", "
+
+        <!-- BlueCat SEO -->
+        <meta name=\"description\" content=\"".$BC_SEO['description']."\" />
+        <meta name=\"keywords\" content=\"".$BC_SEO['mots_clefs']."\" />
+        ".$BC_SEO['meta_supp']."
+
+        ");
+
+    }
+
+    $layout->set_var("title", $select_current_page['nom']);
+    $layout->set_var("sitelanguage", $CORE->info('langue_site'));
+    $layout->set_var("CMSversion", $CORE->info('CMS_version'));
+
+    if(empty($_GET['view_page'])){
+        $layout->set_var("root", "Themes/".THEME."/");
+    }else{
+        $layout->set_var("root", "../Themes/".THEME."/");
+    }
+
+    $layout->set_var("sitename", $CORE->info('titre'));
+    $layout->set_var("content", $display_menu->output());
+
+    echo $layout->output(); // Render final de la PAGE
+
+}else{
+
+    // Page introuvable
+    header('Location: /core/Errors/404.php');
+
 }
 
 /////////////////////////////////

@@ -1,0 +1,14 @@
+ErrorDocument 404 /CORE/Errors/404/index.html
+IndexIgnore CORE/*
+IndexIgnore Storage/*
+IndexIgnore Themes/*
+IndexIgnore Modules/*
+
+RewriteEngine on
+
+RewriteRule ^page/([a-zA-Z0-9\-]+)$ index.php?view_page=$1 [L]
+
+RewriteRule ^storage/([a-zA-Z0-9\-]+)$ /Storage/$1 [L]
+
+RewriteRule ^install/([a-zA-Z0-9\-]+)$ /Install/$1.php [L]
+

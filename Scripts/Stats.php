@@ -57,7 +57,7 @@ $req_select_modules->execute(array(':ip' => $ip));
 if ($req_select_modules->rowCount() <= 3 && $bot == "FALSE"){ // Si l'utilisateur n'a pas participé plus de 3X aux stats, on l'ajoute
 
     $add_stat = $bdd->prepare('INSERT INTO ' . $SQL_prefixe . 'stats (browser_name, ip, fichier, hheure, ddate, pays, bot) VALUES (:browser_name, :ip, :fichier, :hheure, :ddate, :pays, :bot)');
-    $add_stat->execute(array(':browser_name' => $browser, ':ip' => $ip, ':fichier' => $page_req, ':hheure' => date("H:i:s"), ':ddate' => date("d.m.y"), ':pays' => $pays, ':bot' => $bot));
+    $add_stat->execute(array(':browser_name' => $browser, ':ip' => $ip, ':fichier' => $page_req, ':hheure' => date("H:i:s"), ':ddate' => date("d.m.y"), ':pays' => $pays, ':bot' => $_SERVER['HTTP_USER_AGENT']));
 
 }
 
