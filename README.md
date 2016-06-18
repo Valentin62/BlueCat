@@ -34,10 +34,16 @@ Vous devez disposer de:
 
 ## Avancement du projet avant la BÊTA
 - [x] Création du PANEL
-- [ ] Système de droits d'accès
+- [x] Système de droits d'accès
 - [ ] System de gestion des modules
-- [ ] System de gestion des thèmes
-- [ ] System de gestion des licenses
-- [ ] Installateur
+- [x] System de gestion de scripts
+- [x] System de gestion des thèmes
+- [x] System de gestion des licenses
+- [x] Installateur
 - [ ] Création du Store
+
+## Credits
+
+CODE: Pierre TIELEMANS (www.pierre-tielemans.be)
+LOGO: Corentin Brand @ Co2graphisme (www.co2graphisme.fr)
 
